@@ -52,22 +52,27 @@ def fetch_title(): #making function that fetches the tittle
         config['title'] = title #stores title in the config dictionary
 
 def fetch_link(): #making function that fetches all links in the webpage
-    url = _url.get() #gets the url entered on the input field
-    config['links'] = [] #clears any previously stored links
-    _images.set(())  #reset the listbox display
+    url = _url.get()  #Get the URL entered in the input field
+    base_url = url.split("//")[-1].split("/")[0]  #get base domain from the URL
     try:
-        page = requests.get(url) #trys to fetch the webpage in the specific url
-    except requests.RequestException as err:  #handles any error request
-        sb(str(err)) #disppays error message on the status bar
+        page = requests.get(url)  #try to fetch the webpage at the specified URL
+    except requests.RequestException as err:  #handle any request errors
+        sb(str(err))  #show error message in the status bar
     else:
-        soup = BeautifulSoup(page.content, 'html.parser') #analyzes page content with BeautifulSoup
-        links = [a['href'] for a in soup.find_all('a', href=True)] #gets all href attributes from <a>
+        soup = BeautifulSoup(page.content, 'html.parser')  #analyze the page content with BeautifulSoup
+        links = []  #initialize list to store external links
+
+        for a_tag in soup.find_all('a', href=True):  #iterate over all anchor tags
+            link = a_tag['href']
+            if link.startswith(('http', 'https')) and base_url not in link:# check if the link starts with http or https and is not part of the base URL
+                links.append(link)  #add external link to the list
         if links:
-            _images.set(tuple(links))  #show links in the listbox
-            sb(f'Links found: {len(links)}') #show number of links found in the status bar
+            _images.set(tuple(links))  #show the links in the Listbox
+            sb(f'External links found: {len(links)}')  # update status bar with the number of external links
         else:
-            sb('No links found') #tells users if no links were found
-        config['links'] = links #stores link in the config discitonary
+            sb('No external links found')  #show message if no external links were found
+
+        config['links'] = links
 
 def save():
     if not config.get('images'):
