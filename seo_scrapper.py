@@ -39,6 +39,35 @@ def fetch_images(soup, base_url):
         images.append(dict(name=name, url=img_url))
     return images
 
+def fetch_title(): #making function that fetches the tittle
+    url = _url.get()# gets the url entered on the input field
+    try:
+        page = requests.get(url)# trys to fetch the webpage in the specific url
+    except requests.RequestException as err: #handles any error request
+        sb(str(err)) #disppays error message on the status bar
+    else:
+        soup = BeautifulSoup(page.content, 'html.parser') #analyzes page content with BeautifulSoup
+        title = soup.title.string if soup.title else "No title found" #extracts title if available
+        sb(f'Title found: {title}') #displays tittle in the status bar
+        config['title'] = title #stores title in the config dictionary
+
+def fetch_link(): #making function that fetches all links in the webpage
+    url = _url.get() #gets the url entered on the input field
+    config['links'] = [] #clears any previously stored links
+    _images.set(())  #reset the listbox display
+    try:
+        page = requests.get(url) #trys to fetch the webpage in the specific url
+    except requests.RequestException as err:  #handles any error request
+        sb(str(err)) #disppays error message on the status bar
+    else:
+        soup = BeautifulSoup(page.content, 'html.parser') #analyzes page content with BeautifulSoup
+        links = [a['href'] for a in soup.find_all('a', href=True)] #gets all href attributes from <a>
+        if links:
+            _images.set(tuple(links))  #show links in the listbox
+            sb(f'Links found: {len(links)}') #show number of links found in the status bar
+        else:
+            sb('No links found') #tells users if no links were found
+        config['links'] = links #stores link in the config discitonary
 
 def save():
     if not config.get('images'):
@@ -106,9 +135,17 @@ if __name__ == "__main__": # execute logic if run directly
     _url_entry.grid(row=0, column=0, sticky=(E, W, S, N), padx=5)
     # grid mgr places object at position
     _fetch_btn = ttk.Button(
-        _url_frame, text='Fetch info', command=fetch_url) # create button
+        _url_frame, text='Fetch img', command=fetch_url) # create button
     # fetch_url() is callback for button press
-    _fetch_btn.grid(row=0, column=1, sticky=W, padx=5)
+    _fetch_btn.grid(row=0, column=0, sticky=E, padx=5)
+
+    _fetch_title_btn = ttk.Button(
+        _url_frame, text='Fetch title', command=fetch_title) #makes button with text and link it to fetch_title
+    _fetch_title_btn.grid(row=1, column=0, sticky=E, padx=5) #place the button in the grid layout
+
+    _fetch_link_btn = ttk.Button(
+        _url_frame, text='Fetch link', command=fetch_link) #makes button with text and link it to fetch_link
+    _fetch_link_btn.grid(row=2, column=0, sticky=E, padx=5) #place the button in the grid layout
 
     # img_frame contains Lisbox and Radio Frame
     _img_frame = ttk.LabelFrame(
